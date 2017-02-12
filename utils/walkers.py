@@ -1,5 +1,6 @@
 import parsers
 import os
+from types import FileInfo
 
 
 def walk_folder(source_directory, destination_directory,
@@ -14,9 +15,11 @@ def walk_folder(source_directory, destination_directory,
             if filename_lower.endswith(".jpg") or \
                filename_lower.endswith(".jpeg"):
                 output_directory = destination_directory
-                date_and_time = parsers.parse_image(old_path)
+                tags = parsers.get_exif_tags(old_path)
+                date_and_time = parsers.get_date_and_time_from_tags(tags)
             elif filename_lower.endswith(".mov"):
                 output_directory = destination_video_directory
+                tags = None
                 date_and_time = parsers.parse_video(old_path)
             else:
                 print("Skip {}: unknown file format".format(old_path))
@@ -24,8 +27,11 @@ def walk_folder(source_directory, destination_directory,
             if not date_and_time:
                 print("Skip {}: no date found".format(old_path))
                 continue
-            new_path = make_new_path(output_directory, filename, date_and_time,
-                                     renamers)
+            file_info = FileInfo(source_directory=dirpath,
+                                 source_filename=filename,
+                                 date_and_time=date_and_time,
+                                 tags=tags)
+            new_path = make_new_path(file_info, output_directory, renamers)
             if new_path == old_path:
                 print("Skip {}: no rename needed {}".format(old_path,
                                                             date_and_time))
@@ -45,12 +51,14 @@ def create_path_and_rename(old_path, new_path, date_and_time):
     os.rename(old_path, new_path)
 
 
-def make_new_path(output_directory, filename, date_and_time, renamers):
+def make_new_path(file_info, output_directory, renamers):
     new_directory = output_directory
-    new_filename = filename
+    new_filename = file_info.source_filename
     for renamer in renamers:
-        new_directory, new_filename = renamer(new_directory, new_filename,
-                                              date_and_time)
+        new_directory, new_filename = renamer.renamer(file_info,
+                                                      renamer.params,
+                                                      new_directory,
+                                                      new_filename)
     new_path = '{dir}/{filename}'.format(dir=new_directory,
                                          filename=new_filename)
     return new_path

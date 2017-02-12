@@ -1,12 +1,12 @@
 import re
 
 
-def add_date_to_filename(output_directory, filename, date_and_time):
+def add_date_to_filename(file_info, params, output_directory, filename):
     """
     Adds date to the beginning of filename. Old date will be removed.
     """
-    year = date_and_time.split('-')[0]
-    date = date_and_time.split(' ')[0]
+    year = file_info.date_and_time.split('-')[0]
+    date = file_info.date_and_time.split(' ')[0]
     # Strip any existing dates
     filename_without_date = re.sub(r'\s*\d{4}-\d{2}-\d{2}\s*', r'', filename)
     new_filename = '{date} {filename}'.format(year=year, date=date,
@@ -14,12 +14,12 @@ def add_date_to_filename(output_directory, filename, date_and_time):
     return output_directory, new_filename
 
 
-def organize_by_year_and_date(output_directory, filename, date_and_time):
+def organize_by_year_and_date(file_info, params, output_directory, filename):
     """
     Move files into subfolders by year and date, such as '2017/2017-01-01'.
     """
-    year = date_and_time.split('-')[0]
-    date = date_and_time.split(' ')[0]
+    year = file_info.date_and_time.split('-')[0]
+    date = file_info.date_and_time.split(' ')[0]
     new_subdirectory = '/{year}/{date}'.format(year=year, date=date)
     output_without_subdir = output_directory.replace(new_subdirectory, '')
     new_directory = '{parent}{subdir}'.format(parent=output_without_subdir,
@@ -27,11 +27,52 @@ def organize_by_year_and_date(output_directory, filename, date_and_time):
     return new_directory, filename
 
 
-def rename_with_date_and_time(output_directory, filename, date_and_time):
+def rename_with_date_and_time(file_info, params, output_directory, filename):
     """
     Adds date to the beginning of filename. Old date will be removed.
     """
     extension = filename.split('.')[-1]
-    safe_date = re.sub(r'[^\d \-]', r'.', date_and_time)
+    safe_date = re.sub(r'[^\d \-]', r'.', file_info.date_and_time)
     new_filename = '{filename}.{ext}'.format(filename=safe_date, ext=extension)
     return output_directory, new_filename
+
+
+def match_tag(tags, name, value):
+    return tags and name in tags and str(tags[name]) == value
+
+
+def only_rename_specific_model(file_info, model, output_directory, filename):
+    """
+    Uses original path if Image Model EXIF tag doesn't match requested model.
+    Should be used as last renamer in chain.
+    """
+    if match_tag(file_info.tags, 'Image Model', model):
+        return output_directory, filename
+
+    return file_info.source_directory, file_info.source_filename
+
+
+def only_rename_specific_lens(file_info, lens, output_directory, filename):
+    """
+    Uses original path if EXIF LensModel tag doesn't match requested lens.
+    Should be used as last renamer in chain.
+    """
+    if match_tag(file_info.tags, 'EXIF LensModel', lens):
+        return output_directory, filename
+
+    return file_info.source_directory, file_info.source_filename
+
+
+def only_rename_specific_tag(file_info, spec, output_directory, filename):
+    """
+    Uses original path if EXIF tag doesn't match requested value.
+    Tag name and value are specified as name:value.
+    Should be used as last renamer in chain.
+    """
+    if not spec or ':' not in spec:
+        return file_info.source_directory, file_info.source_filename
+    name, value = spec.split(':', 1)
+    if match_tag(file_info.tags, name, value):
+        return output_directory, filename
+
+    return file_info.source_directory, file_info.source_filename

@@ -3,9 +3,9 @@ import struct
 import exifread
 
 
-def parse_image(path):
+def get_exif_tags(path):
     """
-    Read EXIF data from image file and return date when it was taken
+    Read EXIF data from image file and return tags
     """
     image_file = open(path, 'rb')
     tags = exifread.process_file(image_file)
@@ -14,17 +14,34 @@ def parse_image(path):
     if not tags:
         print('No metadata found in image')
         return None
+    return tags
 
+
+def parse_image(path):
+    """
+    Read EXIF data from image file and return date when it was taken
+    """
+    tags = get_exif_tags(path)
+    return get_date_and_time_from_tags(tags)
+
+
+def get_date_and_time_from_tags(tags):
+    """
+    Return original date and time from EXIF tags
+    """
+    if not tags:
+        return None
     if 'EXIF DateTimeOriginal' in tags:
         original_date_and_time = str(tags['EXIF DateTimeOriginal'])
     elif 'EXIF DateTimeDigitized' in tags:
         original_date_and_time = str(tags['EXIF DateTimeDigitized'])
     elif 'Image DateTime' in tags:
         original_date_and_time = str(tags['Image DateTime'])
+    else:
+        original_date_and_time = None
     if not original_date_and_time:
         print('No datetime tags found in image metadata')
         return None
-
     parts = original_date_and_time.split(' ')
     date_and_time = parts[0].replace(':', '-') + " " + parts[1]
     return date_and_time
