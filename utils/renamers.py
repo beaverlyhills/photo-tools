@@ -1,3 +1,4 @@
+import os
 import re
 
 
@@ -20,10 +21,9 @@ def organize_by_year_and_date(file_info, params, output_directory, filename):
     """
     year = file_info.date_and_time.split('-')[0]
     date = file_info.date_and_time.split(' ')[0]
-    new_subdirectory = '/{year}/{date}'.format(year=year, date=date)
+    new_subdirectory = os.path.join(year, date)
     output_without_subdir = output_directory.replace(new_subdirectory, '')
-    new_directory = '{parent}{subdir}'.format(parent=output_without_subdir,
-                                              subdir=new_subdirectory)
+    new_directory = os.path.join(output_without_subdir, new_subdirectory)
     return new_directory, filename
 
 

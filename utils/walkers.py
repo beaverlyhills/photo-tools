@@ -30,7 +30,7 @@ def walk_folder(source_directory, destination_directory,
 
 def process_file(dirpath, filename, destination_directory,
                  destination_video_directory, renamers, parsers):
-    old_path = '{dir}/{file}'.format(dir=dirpath, file=filename)
+    old_path = os.path.join(dirpath, filename)
     for parser in parsers:
         success, date_and_time, tags, is_video = parser(old_path)
         if success:
@@ -73,8 +73,7 @@ def make_new_path(file_info, output_directory, renamers):
                                                       renamer.params,
                                                       new_directory,
                                                       new_filename)
-    new_path = '{dir}/{filename}'.format(dir=new_directory,
-                                         filename=new_filename)
+    new_path = os.path.join(new_directory, new_filename)
     return new_path
 
 

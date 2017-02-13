@@ -1,3 +1,4 @@
+import os
 import sys
 import utils.renamers as renamers
 import utils.walkers as walkers
@@ -21,9 +22,9 @@ for i in range(1, len(sys.argv)):
         dry_run = False
 
 rename_methods = sys.argv[i].split(',')
-source_directory = sys.argv[i + 1].strip("/")
-destination_directory = sys.argv[i + 2].strip("/")
-destination_video_directory = sys.argv[i + 3].strip("/")
+source_directory = sys.argv[i + 1].strip("/").strip(os.sep)
+destination_directory = sys.argv[i + 2].strip("/").strip(os.sep)
+destination_video_directory = sys.argv[i + 3].strip("/").strip(os.sep)
 
 renamers_chain = []
 try:
