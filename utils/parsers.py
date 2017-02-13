@@ -3,7 +3,7 @@ import struct
 import exifread
 
 
-def _get_exif_tags(path):
+def get_exif_tags(path):
     """
     Read EXIF data from image file and return tags
     """
@@ -17,7 +17,7 @@ def _get_exif_tags(path):
     return tags
 
 
-def _get_date_and_time_from_tags(tags):
+def get_date_and_time_from_tags(tags):
     """
     Return original date and time from EXIF tags
     """
@@ -29,6 +29,13 @@ def _get_date_and_time_from_tags(tags):
         original_date_and_time = str(tags['EXIF DateTimeDigitized'])
     elif 'Image DateTime' in tags:
         original_date_and_time = str(tags['Image DateTime'])
+    # elif 'GPS GPSDate' in tags:
+    #     date = str(tags['GPS GPSDate'])
+    #     if 'GPS GPSTimeStamp' in tags:
+    #         time = str(tags['GPS GPSTimeStamp'])
+    #         original_date_and_time = '{} {}'.format(str(date), str(time))
+    #     else:
+    #         original_date_and_time = '{} 00:00:00'.format(str(date))
     else:
         original_date_and_time = None
     if not original_date_and_time:
@@ -53,10 +60,10 @@ def parse_image(path):
     """
     if not _match_extension(path, ['.jpg', '.jpeg']):
         return False, None, None, None
-    tags = _get_exif_tags(path)
+    tags = get_exif_tags(path)
     if not tags:
         return False, None, None, None
-    return True, _get_date_and_time_from_tags(tags), tags, False
+    return True, get_date_and_time_from_tags(tags), tags, False
 
 
 def parse_video(path):
