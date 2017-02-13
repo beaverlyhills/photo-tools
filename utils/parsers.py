@@ -3,7 +3,7 @@ import struct
 import exifread
 
 
-def get_exif_tags(path):
+def _get_exif_tags(path):
     """
     Read EXIF data from image file and return tags
     """
@@ -17,15 +17,7 @@ def get_exif_tags(path):
     return tags
 
 
-def parse_image(path):
-    """
-    Read EXIF data from image file and return date when it was taken
-    """
-    tags = get_exif_tags(path)
-    return get_date_and_time_from_tags(tags)
-
-
-def get_date_and_time_from_tags(tags):
+def _get_date_and_time_from_tags(tags):
     """
     Return original date and time from EXIF tags
     """
@@ -47,10 +39,32 @@ def get_date_and_time_from_tags(tags):
     return date_and_time
 
 
+def _match_extension(path, extensions):
+    path_lower = path.lower()
+    for ext in extensions:
+        if path_lower.endswith(ext.lower()):
+            return True
+    return False
+
+
+def parse_image(path):
+    """
+    Read EXIF data from JPEG image file and return date when it was taken
+    """
+    if not _match_extension(path, ['.jpg', '.jpeg']):
+        return False, None, None, None
+    tags = _get_exif_tags(path)
+    if not tags:
+        return False, None, None, None
+    return True, _get_date_and_time_from_tags(tags), tags, False
+
+
 def parse_video(path):
     """
     Parse MOV file and find it's creation time
     """
+    if not _match_extension(path, ['.mov']):
+        return False, None, None, None
     ATOM_HEADER_SIZE = 8
     # difference between Unix epoch and QuickTime epoch, in seconds
     EPOCH_ADJUSTER = 2082844800
@@ -82,4 +96,4 @@ def parse_video(path):
         date_and_time = str(datetime.datetime.fromtimestamp(creation_date -
                                                             EPOCH_ADJUSTER))
     video_file.close()
-    return date_and_time
+    return True, date_and_time, None, True
