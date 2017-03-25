@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import struct
 import exifread
 
@@ -42,6 +42,9 @@ def get_date_and_time_from_tags(tags):
         print('No datetime tags found in image metadata')
         return None
     parts = original_date_and_time.split(' ')
+    if len(parts) == 1:
+        parts = original_date_and_time.split(':')
+        parts = ('-'.join(parts[0:3]), ':'.join(parts[3:6]))
     date_and_time = parts[0].replace(':', '-') + " " + parts[1]
     return date_and_time
 
@@ -96,11 +99,14 @@ def parse_video(path):
         video_file.seek(4, 1)
         creation_date = struct.unpack(">I", video_file.read(4))[0]
         # modification_date = struct.unpack(">I", video_file.read(4))[0]
-        # print("creation date: ", datetime.datetime.
+        # print("creation date: ", datetime.
         #       fromtimestamp(creation_date - EPOCH_ADJUSTER))
-        # print("modification date: ", datetime.datetime.
+        # print("modification date: ", datetime.
         #       fromtimestamp(modification_date - EPOCH_ADJUSTER))
-        date_and_time = str(datetime.datetime.fromtimestamp(creation_date -
-                                                            EPOCH_ADJUSTER))
+        if creation_date > 0:
+            date_and_time = str(datetime.fromtimestamp(creation_date -
+                                                       EPOCH_ADJUSTER))
     video_file.close()
+    if not date_and_time:
+        return False, None, None, None
     return True, date_and_time, None, True
