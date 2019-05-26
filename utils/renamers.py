@@ -1,5 +1,8 @@
 import os
 import re
+import collections
+
+RenamerInfo = collections.namedtuple('RenamerInfo', 'renamer params')
 
 
 def add_date_to_filename(file_info, params, output_directory, filename):

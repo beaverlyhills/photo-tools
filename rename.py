@@ -2,8 +2,6 @@ import os
 import sys
 import utils.renamers as renamers
 import utils.walkers as walkers
-from utils.types import RenamerInfo
-
 
 if len(sys.argv) < 5:
     print(('Usage: {} [-apply] rename_method1,rename_method2,... ' +
@@ -34,10 +32,11 @@ try:
         else:
             renamer_name = renamer_spec
             renamer_params = None
-        renamer_info = RenamerInfo(renamer=getattr(renamers, renamer_name),
-                                   params=renamer_params)
+        renamer_info = renamers.RenamerInfo(renamer=getattr(renamers,
+                                            renamer_name),
+                                            params=renamer_params)
         renamers_chain.append(renamer_info)
-except:
+except Exception:
     print('Unknown rename method: {}'.format(renamer_name))
     help(renamers)
     sys.exit()

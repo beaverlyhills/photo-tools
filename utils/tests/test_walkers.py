@@ -1,7 +1,7 @@
 import os
 from utils.walkers import make_new_path, process_file
-from utils.types import RenamerInfo
-from utils.types import FileInfo
+from utils.renamers import RenamerInfo
+from utils.walkers import FileInfo
 
 _sample_src = 'src'
 _sample_dst = os.path.join('dir', 'subdir')
@@ -101,19 +101,21 @@ def test_all():
 
 
 def _test_image_parser(path):
-    success = '.jpg' in path
+    if '.jpg' not in path:
+        return None
     date_and_time = _sample_date
     tags = {'Image Model': 'A'}
     is_video = False
-    return success, date_and_time, tags, is_video
+    return date_and_time, tags, is_video
 
 
 def _test_video_parser(path):
-    success = '.mov' in path
+    if '.mov' not in path:
+        return None
     date_and_time = _sample_date
     tags = None
     is_video = True
-    return success, date_and_time, tags, is_video
+    return date_and_time, tags, is_video
 
 
 def test_process_file():

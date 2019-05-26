@@ -1,6 +1,12 @@
 import parsers
 import os
-from types import FileInfo
+import collections
+
+ProcessResult = collections.namedtuple('ProcessResult',
+                                       'old_path new_path date_and_time')
+FileInfo = collections.namedtuple("FileInfo",
+                                  "source_directory source_filename "
+                                  "date_and_time tags")
 
 _parsers = [getattr(parsers, x) for x in dir(parsers) if 'parse_' in x]
 
@@ -14,11 +20,13 @@ def walk_folder(source_directory, destination_directory,
         print('Dry run, no changes will be applied')
     for (dirpath, dirnames, filenames) in os.walk(source_directory):
         for filename in filenames:
-            old_path, new_path, \
-                date_and_time = process_file(dirpath, filename,
-                                             destination_directory,
-                                             destination_video_directory,
-                                             renamers, _parsers)
+            result = process_file(dirpath, filename,
+                                  destination_directory,
+                                  destination_video_directory,
+                                  renamers, _parsers)
+            if not result:
+                continue
+            (old_path, new_path, date_and_time) = result
             if new_path:
                 print('Renaming {old} to {new} with date {datetime}'.
                       format(old=old_path, new=new_path,
@@ -30,17 +38,22 @@ def walk_folder(source_directory, destination_directory,
 
 def process_file(dirpath, filename, destination_directory,
                  destination_video_directory, renamers, parsers):
+    result = None
     old_path = os.path.join(dirpath, filename)
     for parser in parsers:
-        success, date_and_time, tags, is_video = parser(old_path)
-        if success:
-            break
-    if not success:
+        try:
+            result = parser(old_path)
+            if result:
+                break
+        except Exception:
+            pass
+    if not result:
         print("Skip {}: unknown file format".format(old_path))
-        return None, None, None
+        return None
+    (date_and_time, tags, is_video) = result
     if not date_and_time:
         print("Skip {}: no date found".format(old_path))
-        return None, None, None
+        return None
     if is_video:
         output_directory = destination_video_directory
     else:
@@ -53,9 +66,10 @@ def process_file(dirpath, filename, destination_directory,
     if new_path == old_path:
         print("Skip {}: no rename needed {}".format(old_path,
                                                     date_and_time))
-        return None, None, None
+        return None
     new_path = handle_duplicates(old_path, new_path)
-    return old_path, new_path, date_and_time
+    return ProcessResult(old_path=old_path, new_path=new_path,
+                         date_and_time=date_and_time)
 
 
 def create_path_and_rename(old_path, new_path, date_and_time):

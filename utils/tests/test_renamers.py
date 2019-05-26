@@ -4,7 +4,7 @@ from utils.renamers import (add_date_to_filename, organize_by_year_and_date,
                             only_rename_specific_model,
                             only_rename_specific_lens,
                             only_rename_specific_tag)
-from utils.types import FileInfo
+from utils.walkers import FileInfo
 
 _sample_src = 'src'
 _sample_dst = os.path.join('dir', 'subdir')

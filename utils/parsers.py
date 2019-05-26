@@ -1,6 +1,10 @@
 from datetime import datetime
 import struct
 import exifread
+import collections
+
+ParserResult = collections.namedtuple('ParserResult',
+                                      'date_and_time tags is_video')
 
 
 def get_exif_tags(path):
@@ -12,7 +16,6 @@ def get_exif_tags(path):
     image_file.close()
 
     if not tags:
-        print('No metadata found in image')
         return None
     return tags
 
@@ -39,7 +42,6 @@ def get_date_and_time_from_tags(tags):
     else:
         original_date_and_time = None
     if not original_date_and_time:
-        print('No datetime tags found in image metadata')
         return None
     parts = original_date_and_time.split(' ')
     if len(parts) == 1:
@@ -62,19 +64,21 @@ def parse_image(path):
     Read EXIF data from JPEG image file and return date when it was taken
     """
     if not _match_extension(path, ['.jpg', '.jpeg']):
-        return False, None, None, None
+        return None
     tags = get_exif_tags(path)
     if not tags:
-        return False, None, None, None
-    return True, get_date_and_time_from_tags(tags), tags, False
+        return None
+    return ParserResult(date_and_time=get_date_and_time_from_tags(tags),
+                        tags=tags, is_video=False)
 
 
 def parse_video(path):
     """
     Parse MOV file and find it's creation time
+    https://stackoverflow.com/questions/21355316/getting-metadata-for-mov-video/21395803
     """
     if not _match_extension(path, ['.mov']):
-        return False, None, None, None
+        return None
     ATOM_HEADER_SIZE = 8
     # difference between Unix epoch and QuickTime epoch, in seconds
     EPOCH_ADJUSTER = 2082844800
@@ -108,5 +112,5 @@ def parse_video(path):
                                                        EPOCH_ADJUSTER))
     video_file.close()
     if not date_and_time:
-        return False, None, None, None
-    return True, date_and_time, None, True
+        return None
+    return ParserResult(date_and_time=date_and_time, tags=None, is_video=True)
