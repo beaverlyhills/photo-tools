@@ -13,13 +13,16 @@ _parsers = [getattr(parsers, x) for x in dir(parsers) if 'parse_' in x]
 
 def walk_folder(source_directory, destination_directory,
                 destination_video_directory, renamers, dry_run):
+    print('Start from %s' % source_directory)
     if not _parsers:
         print('No file format parsers found')
         return
     if dry_run:
         print('Dry run, no changes will be applied')
     for (dirpath, dirnames, filenames) in os.walk(source_directory):
+        print('Walk %s' % dirpath)
         for filename in filenames:
+            print('Check %s' % filename)
             result = process_file(dirpath, filename,
                                   destination_directory,
                                   destination_video_directory,

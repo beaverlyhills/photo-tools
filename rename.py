@@ -20,9 +20,9 @@ for i in range(1, len(sys.argv)):
         dry_run = False
 
 rename_methods = sys.argv[i].split(',')
-source_directory = sys.argv[i + 1].strip("/").strip(os.sep)
-destination_directory = sys.argv[i + 2].strip("/").strip(os.sep)
-destination_video_directory = sys.argv[i + 3].strip("/").strip(os.sep)
+source_directory = sys.argv[i + 1].rstrip("/").rstrip(os.sep)
+destination_directory = sys.argv[i + 2].rstrip("/").rstrip(os.sep)
+destination_video_directory = sys.argv[i + 3].rstrip("/").rstrip(os.sep)
 
 renamers_chain = []
 try:
