@@ -1,7 +1,6 @@
-from datetime import datetime
-import struct
 import exifread
 import collections
+from .heic import process_heic, process_mpeg
 
 ParserResult = collections.namedtuple('ParserResult',
                                       'date_and_time tags is_video')
@@ -11,13 +10,17 @@ def get_exif_tags(path):
     """
     Read EXIF data from image file and return tags
     """
-    image_file = open(path, 'rb')
-    tags = exifread.process_file(image_file)
-    image_file.close()
+    result = parse_image(path)
+    if result:
+        return result.tags
+    result = parse_heic(path)
+    if result:
+        return result.tags
+    return None
 
-    if not tags:
-        return None
-    return tags
+
+def get_movie_header(path):
+    return process_mpeg(path)
 
 
 def get_date_and_time_from_tags(tags):
@@ -65,7 +68,21 @@ def parse_image(path):
     """
     if not _match_extension(path, ['.jpg', '.jpeg']):
         return None
-    tags = get_exif_tags(path)
+    with open(path, 'rb') as image_file:
+        tags = exifread.process_file(image_file)
+        if not tags:
+            return None
+        return ParserResult(date_and_time=get_date_and_time_from_tags(tags),
+                            tags=tags, is_video=False)
+
+
+def parse_heic(path):
+    """
+    Read EXIF data from HEIC image file and return date when it was taken
+    """
+    if not _match_extension(path, ['.heic']):
+        return None
+    tags = process_heic(path)
     if not tags:
         return None
     return ParserResult(date_and_time=get_date_and_time_from_tags(tags),
@@ -74,43 +91,12 @@ def parse_image(path):
 
 def parse_video(path):
     """
-    Parse MOV file and find it's creation time
-    https://stackoverflow.com/questions/21355316/getting-metadata-for-mov-video/21395803
+    Parse MOV/MP4 file and find it's creation time
     """
-    if not _match_extension(path, ['.mov']):
+    if not _match_extension(path, ['.mov', '.mp4']):
         return None
-    ATOM_HEADER_SIZE = 8
-    # difference between Unix epoch and QuickTime epoch, in seconds
-    EPOCH_ADJUSTER = 2082844800
-    # open file and search for moov item
-    video_file = open(path, "rb")
-    while 1:
-        atom_header = video_file.read(ATOM_HEADER_SIZE)
-        if atom_header[4:8] == 'moov':
-            break
-        else:
-            atom_size = struct.unpack(">I", atom_header[0:4])[0]
-            video_file.seek(atom_size - 8, 1)
-
-    # found 'moov', look for 'mvhd' and timestamps
-    atom_header = video_file.read(ATOM_HEADER_SIZE)
-    date_and_time = None
-    if atom_header[4:8] == 'cmov':
-        print("moov atom is compressed")
-    elif atom_header[4:8] != 'mvhd':
-        print("expected to find 'mvhd' header")
-    else:
-        video_file.seek(4, 1)
-        creation_date = struct.unpack(">I", video_file.read(4))[0]
-        # modification_date = struct.unpack(">I", video_file.read(4))[0]
-        # print("creation date: ", datetime.
-        #       fromtimestamp(creation_date - EPOCH_ADJUSTER))
-        # print("modification date: ", datetime.
-        #       fromtimestamp(modification_date - EPOCH_ADJUSTER))
-        if creation_date > 0:
-            date_and_time = str(datetime.fromtimestamp(creation_date -
-                                                       EPOCH_ADJUSTER))
-    video_file.close()
-    if not date_and_time:
+    header = process_mpeg(path)
+    if not header:
         return None
-    return ParserResult(date_and_time=date_and_time, tags=None, is_video=True)
+    return ParserResult(date_and_time=header.creation_date,
+                        tags=None, is_video=True)

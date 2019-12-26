@@ -33,7 +33,7 @@ try:
             renamer_name = renamer_spec
             renamer_params = None
         renamer_info = renamers.RenamerInfo(renamer=getattr(renamers,
-                                            renamer_name),
+                                                            renamer_name),
                                             params=renamer_params)
         renamers_chain.append(renamer_info)
 except Exception:
