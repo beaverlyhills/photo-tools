@@ -179,28 +179,25 @@ def parse_item_location_box(full_box):
         if full_box.version == 1 or full_box.version == 2:
             full_box.box.read(2)
         data_reference_index = full_box.box.read(2)
-        base_offset_data = full_box.box.read(base_offset_size)
-        if len(base_offset_data) == 2:
-            base_offset = struct.unpack(">H", ec_data[0:2])[0]
-        elif len(base_offset_data) == 4:
-            base_offset = struct.unpack(">I", ec_data[0:4])[0]
+        if base_offset_size == 2:
+            base_offset = get16(full_box.box)
+        elif base_offset_size == 4:
+            base_offset =  get32(full_box.box)
         else:
             base_offset = 0
         extent_count = get16(full_box.box)
         offsets = []
         for j in range(0, extent_count):
             if (full_box.version == 1 or full_box.version == 2) and index_size > 0:
-                extent_index = full_box.box.read(base_offset_size)
-            extent_offset_data = full_box.box.read(offset_size)
-            if len(extent_offset_data) == 2:
-                extent_offset = struct.unpack(">H", extent_offset_data[0:2])[0]
-            else:
-                extent_offset = struct.unpack(">I", extent_offset_data[0:4])[0]
-            extent_length_data = full_box.box.read(length_size)
-            if len(extent_length_data) == 2:
-                extent_length = struct.unpack(">H", extent_length_data[0:2])[0]
-            else:
-                extent_length = struct.unpack(">I", extent_length_data[0:4])[0]
+                extent_index = full_box.box.read(index_size)
+            if offset_size == 2:
+                extent_offset = get16(full_box.box)
+            elif offset_size == 4:
+                extent_offset = get32(full_box.box)
+            if length_size == 2:
+                extent_length = get16(full_box.box)
+            elif length_size == 4:
+                extent_length = get32(full_box.box)
             offsets.append(ItemOffset(base_offset=base_offset,
                                       extent_offset=extent_offset,
                                       extent_length=extent_length))
