@@ -1,9 +1,10 @@
 import exifread
 import collections
+import png
 from .heic import process_heic, process_mpeg
 
 ParserResult = collections.namedtuple('ParserResult',
-                                      'date_and_time tags is_video')
+                                      'date_and_time tags is_video is_raw')
 
 
 def get_exif_tags(path):
@@ -16,6 +17,9 @@ def get_exif_tags(path):
     result = parse_heic(path)
     if result:
         return result.tags
+    result = parse_png(path)
+    if result:
+        return result
     return None
 
 
@@ -66,27 +70,30 @@ def parse_image(path):
     """
     Read EXIF data from JPEG image file and return date when it was taken
     """
-    if not _match_extension(path, ['.jpg', '.jpeg']):
+    raw_ext=['.arw', '.nef']
+    img_ext=['.jpg', '.jpeg']
+    if not _match_extension(path, img_ext) and not _match_extension(path, raw_ext):
         return None
     with open(path, 'rb') as image_file:
         tags = exifread.process_file(image_file)
         if not tags:
             return None
         return ParserResult(date_and_time=get_date_and_time_from_tags(tags),
-                            tags=tags, is_video=False)
+                            tags=tags, is_video=False,
+                            is_raw=_match_extension(path, raw_ext))
 
 
 def parse_heic(path):
     """
     Read EXIF data from HEIC image file and return date when it was taken
     """
-    if not _match_extension(path, ['.heic']):
+    if not _match_extension(path, ['.heic', '.hif']):
         return None
     tags = process_heic(path)
     if not tags:
         return None
     return ParserResult(date_and_time=get_date_and_time_from_tags(tags),
-                        tags=tags, is_video=False)
+                        tags=tags, is_video=False, is_raw=False)
 
 
 def parse_video(path):
@@ -99,4 +106,17 @@ def parse_video(path):
     if not header:
         return None
     return ParserResult(date_and_time=header.creation_date,
-                        tags=None, is_video=True)
+                        tags=None, is_video=True, is_raw=False)
+
+
+def parse_png(path):
+    """
+    Read metadata from PNG image file and return date when it was taken
+    """
+    if not _match_extension(path, ['.png']):
+        return None
+    r=png.Reader(filename=path)
+    (width, height, rows, info) = r.read()
+    print(info)
+    return ParserResult(date_and_time=get_date_and_time_from_tags(tags),
+                        tags=tags, is_video=False, is_raw=False)

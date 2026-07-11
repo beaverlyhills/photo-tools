@@ -14,6 +14,7 @@ python rename.py -apply organize_by_year_and_date "Dropbox/Camera Uploads" "Drop
 Dependencies
 ------
 * exifread - https://pypi.python.org/pypi/ExifRead
+* pypng - https://github.com/drj11/pypng
 
 Testing
 ------

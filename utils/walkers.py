@@ -1,6 +1,7 @@
 from . import parsers
 import os
 import collections
+import shutil
 
 ProcessResult = collections.namedtuple('ProcessResult',
                                        'old_path new_path date_and_time')
@@ -12,7 +13,8 @@ _parsers = [getattr(parsers, x) for x in dir(parsers) if 'parse_' in x]
 
 
 def walk_folder(source_directory, destination_directory,
-                destination_video_directory, renamers, dry_run):
+                destination_video_directory, destination_raw_directory,
+                renamers, dry_run):
     print('Start from %s' % source_directory)
     if not _parsers:
         print('No file format parsers found')
@@ -26,6 +28,7 @@ def walk_folder(source_directory, destination_directory,
             result = process_file(dirpath, filename,
                                   destination_directory,
                                   destination_video_directory,
+                                  destination_raw_directory,
                                   renamers, _parsers)
             if not result:
                 continue
@@ -40,7 +43,8 @@ def walk_folder(source_directory, destination_directory,
 
 
 def process_file(dirpath, filename, destination_directory,
-                 destination_video_directory, renamers, parsers):
+                 destination_video_directory, destination_raw_directory,
+                 renamers, parsers):
     result = None
     old_path = os.path.join(dirpath, filename)
     for parser in parsers:
@@ -53,12 +57,14 @@ def process_file(dirpath, filename, destination_directory,
     if not result:
         print("Skip {}: unknown file format".format(old_path))
         return None
-    (date_and_time, tags, is_video) = result
+    (date_and_time, tags, is_video, is_raw) = result
     if not date_and_time:
         print("Skip {}: no date found".format(old_path))
         return None
     if is_video:
         output_directory = destination_video_directory
+    elif is_raw:
+        output_directory = destination_raw_directory
     else:
         output_directory = destination_directory
     file_info = FileInfo(source_directory=dirpath,
@@ -79,7 +85,7 @@ def create_path_and_rename(old_path, new_path, date_and_time):
     final_directory = os.path.dirname(new_path)
     if not os.path.exists(final_directory):
         os.makedirs(final_directory)
-    os.rename(old_path, new_path)
+    shutil.move(old_path, new_path)
 
 
 def make_new_path(file_info, output_directory, renamers):

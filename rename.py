@@ -23,6 +23,7 @@ rename_methods = sys.argv[i].split(',')
 source_directory = sys.argv[i + 1].rstrip("/").rstrip(os.sep)
 destination_directory = sys.argv[i + 2].rstrip("/").rstrip(os.sep)
 destination_video_directory = sys.argv[i + 3].rstrip("/").rstrip(os.sep)
+destination_raw_directory = sys.argv[i + 4].rstrip("/").rstrip(os.sep)
 
 renamers_chain = []
 try:
@@ -42,4 +43,5 @@ except Exception:
     sys.exit()
 
 walkers.walk_folder(source_directory, destination_directory,
-                    destination_video_directory, renamers_chain, dry_run)
+                    destination_video_directory, destination_raw_directory,
+                    renamers_chain, dry_run)
